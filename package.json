@@ -9,17 +9,20 @@
     "check-types": "turbo run check-types"
   },
   "devDependencies": {
+    "@msi/eslint-config": "workspace:*",
+    "@msi/prettier-config": "workspace:*",
+    "@msi/tsconfig": "workspace:*",
     "prettier": "^3.5.3",
-    "turbo": "^2.4.4",
     "tsup": "8.3.0",
+    "turbo": "^2.4.4",
     "typescript": "5.8.2"
   },
-  "packageManager": "pnpm@9.0.0",
   "engines": {
     "node": ">=18"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
+      "esbuild",
       "sharp"
     ]
   }
