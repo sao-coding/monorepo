@@ -1,4 +1,4 @@
-import tszhong0411 from "./dist/index.js";
+import msi from "./dist/index.js";
 
 export default msi({
   project: "./tsconfig.json",

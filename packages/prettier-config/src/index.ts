@@ -8,7 +8,7 @@ type SortJsonOptions = {
 
 export type Options = Config & SortJsonOptions & PluginOptions
 
-const tszhong0411 = (options: Options = {}): Options => {
+const msi = (options: Options = {}): Options => {
   const { plugins = [], ...rest } = options
 
   return {
@@ -37,4 +37,4 @@ const tszhong0411 = (options: Options = {}): Options => {
   }
 }
 
-export default tszhong0411
+export default msi
