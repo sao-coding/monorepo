@@ -1,0 +1,125 @@
+#!/usr/bin/env sh
+. "$(dirname "$0")/h"
+
+# 啟用詳細的錯誤跟踪
+# set -x
+
+# 設定錯誤處理函數
+check_tool() {
+  tool_name=$1
+  tool_cmd=$2
+  
+  if [ -x "$(command -v $tool_name)" ]; then
+    echo "正在運行 $tool_name..."
+    eval "$tool_cmd"
+    if [ $? -ne 0 ]; then
+      echo "❌ $tool_name 檢查失敗。請在提交前修正問題。"
+      return 1
+    else
+      echo "✅ $tool_name 檢查通過！"
+    fi
+  else
+    echo "⚠️ $tool_name 未安裝。跳過 $tool_name 檢查。"
+  fi
+  return 0
+}
+
+# 獲取暫存區中的檔案而非檢查所有檔案（提高效能）
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(js|jsx|ts|tsx|mjs|cjs|json|css|scss|md|yaml|yml)$')
+
+# 只在有符合條件的檔案時才執行檢查
+if [ -n "$STAGED_FILES" ]; then
+  # 檢查 apps 目錄下每個應用程序的文件
+  APPS_DIRS=$(echo "$STAGED_FILES" | grep -o "apps/[^/]*" | sort | uniq)
+  
+  # 處理 apps 目錄下的文件
+  for APP_DIR in $APPS_DIRS; do
+    echo "檢查 $APP_DIR 目錄中的文件..."
+    APP_FILES=$(echo "$STAGED_FILES" | grep "^$APP_DIR/")
+    
+    if [ -n "$APP_FILES" ]; then
+      # 切換到應用程序目錄
+      pushd $APP_DIR > /dev/null
+      
+      # 檢查該應用是否有 ESLint 配置
+      if [ -f ".eslintrc.js" ] || [ -f ".eslintrc.json" ] || [ -f ".eslintrc.yml" ] || [ -f ".eslintrc" ] || [ -f "package.json" ]; then
+        # 使用相對路徑，因為我們已經在應用目錄中
+        REL_APP_FILES=$(echo "$APP_FILES" | sed "s|^$APP_DIR/||")
+        
+        # 檢查 ESLint
+        if [ -x "$(command -v eslint)" ] || [ -x "$(command -v ./node_modules/.bin/eslint)" ]; then
+          ESLINT_CMD="./node_modules/.bin/eslint"
+          if [ ! -x "$(command -v $ESLINT_CMD)" ]; then
+            ESLINT_CMD="eslint"
+          fi
+          
+          echo "在 $APP_DIR 中運行 ESLint..."
+          $ESLINT_CMD --quiet --max-warnings=0 --fix $REL_APP_FILES
+          if [ $? -ne 0 ]; then
+            echo "❌ $APP_DIR 中的 ESLint 檢查失敗。請在提交前修正問題。"
+            popd > /dev/null
+            exit 1
+          else
+            echo "✅ $APP_DIR 中的 ESLint 檢查通過！"
+          fi
+        else
+          echo "⚠️ $APP_DIR 中未找到 ESLint。跳過 ESLint 檢查。"
+        fi
+      else
+        echo "⚠️ $APP_DIR 中未找到 ESLint 配置。跳過 ESLint 檢查。"
+      fi
+      
+      # 切回原來的目錄
+      popd > /dev/null
+    fi
+  done
+  
+  # 處理非 apps 目錄下的文件
+#   ROOT_FILES=$(echo "$STAGED_FILES" | grep -v "^apps/")
+#   echo "ROOT_FILES: $ROOT_FILES"
+#   if [ -n "$ROOT_FILES" ]; then
+#     echo "檢查根目錄中的文件..."
+    
+#     # 檢查 ESLint (使用 --quiet 減少輸出)
+#     check_tool "eslint" "eslint --quiet --max-warnings=0 --fix $ROOT_FILES" || exit 1
+#   else
+#     echo "沒有根目錄檔案需要檢查。"
+#   fi
+  
+  # 對所有文件運行 Prettier (如果有安裝並且有檔案需要檢查)
+  echo "準備運行 Prettier 檢查..."
+  # 檢查 STAGED_FILES 是否仍然存在/有效
+  if [ -n "$STAGED_FILES" ]; then
+    if [ -x "$(command -v prettier)" ]; then
+      echo "運行 Prettier 檢查..."
+      prettier --write $STAGED_FILES || true
+      PRETTIER_EXIT_CODE=$?
+      echo "Prettier 退出碼: $PRETTIER_EXIT_CODE"
+      if [ $PRETTIER_EXIT_CODE -ne 0 ]; then
+        echo "⚠️ Prettier 可能有些問題，但我們將繼續執行。"
+      else
+        echo "✅ Prettier 檢查完成！"
+      fi
+    else
+      echo "⚠️ Prettier 未安裝。跳過 Prettier 檢查。"
+    fi
+  else
+    echo "沒有檔案需要進行 Prettier 檢查。"
+  fi
+  
+  # 如果有修改檔案，重新加入暫存區
+  if [ -n "$STAGED_FILES" ]; then
+    echo "重新加入修改過的檔案..."
+    git add $STAGED_FILES || true
+    echo "✅ 完成 git add 操作。"
+  else
+    echo "沒有檔案需要重新加入暫存區。"
+  fi
+  
+  # 成功結束腳本
+  echo "✅ 所有檢查完成。"
+else
+  echo "沒有需要檢查的檔案。"
+fi
+
+exit 0
