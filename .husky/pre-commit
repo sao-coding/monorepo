@@ -1,0 +1,44 @@
+#!/usr/bin/env sh
+. "$(dirname "$0")/h"
+
+# 設定錯誤處理函數
+check_tool() {
+  tool_name=$1
+  tool_cmd=$2
+  
+  if [ -x "$(command -v $tool_name)" ]; then
+    echo "正在運行 $tool_name..."
+    eval "$tool_cmd"
+    if [ $? -ne 0 ]; then
+      echo "❌ $tool_name 檢查失敗。請在提交前修正問題。"
+      return 1
+    else
+      echo "✅ $tool_name 檢查通過！"
+    fi
+  else
+    echo "⚠️ $tool_name 未安裝。跳過 $tool_name 檢查。"
+  fi
+  return 0
+}
+
+# 獲取暫存區中的檔案而非檢查所有檔案（提高效能）
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(js|jsx|ts|tsx|json|css|scss|md|yaml|yml)$')
+
+# 只在有符合條件的檔案時才執行檢查
+if [ -n "$STAGED_FILES" ]; then
+  # 檢查 ESLint
+  check_tool "eslint" "eslint --quiet --fix $STAGED_FILES" || exit 1
+  
+  # 檢查 Prettier
+  check_tool "prettier" "prettier --write $STAGED_FILES" || exit 1
+else
+  echo "沒有需要檢查的檔案。"
+fi
+
+# 如果有修改檔案，重新加入暫存區
+if [ -n "$STAGED_FILES" ]; then
+  echo "重新加入修改過的檔案..."
+  git add $STAGED_FILES
+fi
+
+exit 0
