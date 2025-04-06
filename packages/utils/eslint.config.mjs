@@ -1,7 +1,7 @@
-import msi from "@msi/eslint-config";
+import msi from '@msi/eslint-config'
 
 export default msi({
-  project: "./tsconfig.json",
+  project: './tsconfig.json',
   tsconfigRootDir: import.meta.dirname,
-  turbo: true,
-});
+  turbo: true
+})

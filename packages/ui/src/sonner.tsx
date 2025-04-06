@@ -1,25 +1,31 @@
-"use client"
+import { AlertCircleIcon, AlertTriangleIcon, CheckCircle2Icon, InfoIcon } from 'lucide-react'
+import { Toaster as Sonner } from 'sonner'
 
-import { useTheme } from "next-themes"
-import { Toaster as Sonner, ToasterProps } from "sonner"
+type ToasterProps = React.ComponentProps<typeof Sonner>
 
-const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
+const Toaster = (props: ToasterProps) => {
+  const { theme = 'system', ...rest } = props
 
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
-      className="toaster group"
+      theme={theme}
       style={
         {
-          "--normal-bg": "var(--popover)",
-          "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--border)",
+          '--normal-border': 'var(--color-border)',
+          '--normal-bg': 'var(--color-background)',
+          '--normal-text': 'var(--color-foreground)'
         } as React.CSSProperties
       }
-      {...props}
+      icons={{
+        success: <CheckCircle2Icon className='size-5 text-green-500' />,
+        error: <AlertCircleIcon className='size-5 text-red-500' />,
+        warning: <AlertTriangleIcon className='size-5 text-yellow-500' />,
+        info: <InfoIcon className='size-5 text-blue-500' />
+      }}
+      {...rest}
     />
   )
 }
 
-export { Toaster }
+export { Toaster, type ToasterProps }
+export { toast } from 'sonner'

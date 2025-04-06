@@ -23,6 +23,7 @@ export const react = (options?: Options): Linter.Config[] => {
             jsx: true
           },
           project: options?.project,
+          tsconfigRootDir: options?.tsconfigRootDir,
           sourceType: 'module'
         }
       },
