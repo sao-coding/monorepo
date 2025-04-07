@@ -69,6 +69,8 @@ export default defineConfig({
     aiNumber: 1,
     themeColorCode: '',
     scopes,
+    enableMultipleScopes: true,
+    scopeEnumSeparator: ',',
     allowCustomScopes: true,
     allowEmptyScopes: true,
     customScopesAlign: 'bottom',
